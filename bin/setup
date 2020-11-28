@@ -38,7 +38,13 @@ kubectl exec -it $pod -- bash -c "tctl users add $USER" | tee tctl.log
 # echo "`kubectl port-forward` is running in process $pid"
 # echo "run \"kill $pid\" to stop"
 
-sudo hostess add teleport.example.com 127.0.0.1
+if hostess add teleport.example.com 127.0.0.1; then
+  echo "Updated hosts file"
+else
+  echo "Needs root permissions to update hosts file"
+  sudo hostess add teleport.example.com 127.0.0.1
+    echo "Updated hosts file"
+fi
 
 # signup_url=$(grep https:// tctl.log)
 
