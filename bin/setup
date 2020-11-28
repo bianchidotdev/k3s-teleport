@@ -3,6 +3,43 @@ set -e
 
 SCRIPT_DIR=$(dirname $0)
 
-k3d cluster create test --servers 2 --agents 2 \
-  --api-port 6550 -p "8081:80@loadbalancer" \
-  --volume $(pwd)/manifests:/var/lib/rancher/k3s/server/manifests
+if k3d cluster list | grep -q 'teleport'; then
+  echo "teleport cluster already running"
+else
+  echo "creating teleport cluster"
+  k3d cluster create teleport --servers 2 --agents 2 \
+    --api-port 6550 -p "8081:80@loadbalancer" -p "3080:3080@loadbalancer" \
+    --volume $(pwd)/manifests:/var/lib/rancher/k3s/server/manifests
+fi
+
+
+base_dir=$(cd $(dirname $0); cd ..; pwd)
+cd $base_dir
+
+bin/create-internal-pki
+
+cd $base_dir/pki
+
+kubectl create secret tls tls-web --cert=proxy-server.pem --key=proxy-server-key.pem
+kubectl create configmap ca-certs --from-file=ca.pem
+
+cd $base_dir
+
+helm repo add teleport https://charts.releases.teleport.dev
+helm upgrade --install --reset-values -f charts/teleport/local.values.yaml --wait teleport teleport/teleport
+
+pod=$(kubectl get po | grep "^teleport" | grep Running | cut -d' ' -f1)
+
+kubectl exec -it $pod -- bash -c "tctl users add $USER" | tee tctl.log
+
+# kubectl port-forward $pod 3022 3023 3024 3025 3026 3080 1>&2 > port-forward.log &
+# pid=$!
+
+# echo "`kubectl port-forward` is running in process $pid"
+# echo "run \"kill $pid\" to stop"
+
+sudo hostess add teleport.example.com 127.0.0.1
+
+# signup_url=$(grep https:// tctl.log)
+
+# open $signup_url

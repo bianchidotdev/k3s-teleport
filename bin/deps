@@ -15,11 +15,17 @@ DEPS=(
   k3d
   kubectl
   kustomize
+  cfssl
+  cfssljson
+  hostess
 )
 
 k3d_cmd="curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash"
 kubectl_cmd="curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl && chmod +x ./kubectl && sudo mv ./kubectl /usr/local/bin/kubectl"
 kustomize_cmd='curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash"'
+cfssl_cmd='go get -u github.com/cloudflare/cfssl/cmd/cfssl'
+cfssljson_cmd='go get -u github.com/cloudflare/cfssl/cmd/cfssljson'
+hostess_cmd='go get -u github.com/cbednarski/hostess'
 
 log "Installing required deps"
 
