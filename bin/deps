@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+set -e
+
+function timestamp {
+  date +"%Y-%m-%dT%H:%M:%S"
+}
+
+function log {
+  echo "[$(timestamp)] $@"
+}
+
+log "Starting setup"
+
+DEPS=(
+  k3d
+  kubectl
+  kustomize
+)
+
+k3d_cmd="curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash"
+kubectl_cmd="curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl && chmod +x ./kubectl && sudo mv ./kubectl /usr/local/bin/kubectl"
+kustomize_cmd='curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash"'
+
+log "Installing required deps"
+
+for dependency in ${DEPS[@]}; do
+  if test ! $(which $dependency); then
+    cmd_var="${dependency}_cmd"
+    log "Installing $dependency with \"${!cmd_var}\""
+    eval ${!cmd_var}
+  else log "$dependency already installed"
+  fi
+done

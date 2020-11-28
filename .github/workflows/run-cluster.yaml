@@ -1,0 +1,22 @@
+name: Run Cluster Test
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  start:
+    name: cluster run
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Install deps
+        run: ./bin/deps
+
+      - name: Create Cluster
+        run: ./bin/setup
+
+      - name: Validate Cluster
+        run: ./bin/test

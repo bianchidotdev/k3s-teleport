@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -e
+
+SCRIPT_DIR=$(dirname $0)
+
+kubectl get nodes
+kubectl get pods
+
+
+${SCRIPT_DIR}/wait-until-pods-ready 30 3
+
+# Handle "curl: (52) Empty reply from server" while nginx is starting
+sleep 20
+curl -sS http://localhost:8081/
