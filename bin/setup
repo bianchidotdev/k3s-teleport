@@ -8,9 +8,10 @@ if k3d cluster list | grep -q 'teleport'; then
 else
   echo "creating teleport cluster"
   k3d cluster create teleport --servers 2 --agents 2 \
-    --api-port 6550 -p "8081:80@loadbalancer" -p "3080:3080@loadbalancer" \
+    --api-port 6550 -p "8081:80@loadbalancer" \
     --volume $(pwd)/manifests:/var/lib/rancher/k3s/server/manifests
 fi
+     #-p "3080:3080@loadbalancer" \
 
 
 base_dir=$(cd $(dirname $0); cd ..; pwd)
@@ -30,13 +31,13 @@ helm upgrade --install --reset-values -f charts/teleport/local.values.yaml --wai
 
 pod=$(kubectl get po | grep "^teleport" | grep Running | cut -d' ' -f1)
 
-kubectl exec -it $pod -- bash -c "tctl users add $USER" | tee tctl.log
+kubectl exec -it $pod -- bash -c "tctl users add $USER --k8s-groups='system:masters'" | tee tctl.log
 
-# kubectl port-forward $pod 3022 3023 3024 3025 3026 3080 1>&2 > port-forward.log &
-# pid=$!
+kubectl port-forward $pod 3022 3023 3024 3025 3026 3080 1>&2 > port-forward.log &
+pid=$!
 
-# echo "`kubectl port-forward` is running in process $pid"
-# echo "run \"kill $pid\" to stop"
+echo "`kubectl port-forward` is running in process $pid"
+echo "run \"kill $pid\" to stop"
 
 echo '127.0.0.1 teleport.example.com' | sudo tee -a /etc/hosts
 
